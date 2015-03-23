@@ -1,0 +1,38 @@
+/*
+Theme Name:     Customizr SeasideStreet Child Theme
+Theme URI:      http://eurion.bg/seasidestreet
+Description:    A child theme for the Customizr WordPress theme for Wake Park Gradina web site
+Author:         Daniel Velev
+Author URI:     http://eurion.bg
+Template:       customizr
+Version:        1.0.0
+*/
+
+/* awesome customizations start right here !
+-------------------------------------------------------------- */
+
+.front-page-background {
+/* background image for the front page on the whole screen */
+	background:     url(img/in_progress.gif) no-repeat fixed 0 0;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
+
+/* remove slider */
+#customizr-slider.carousel{
+	display: none;
+}
+
+.page-title{
+	display: none;
+}
+
+header.tc-header {
+	filter: alpha(opacity=90); 
+}
+
+
+
+

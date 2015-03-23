@@ -11,9 +11,9 @@ Version:        1.0.0
 /* awesome customizations start right here !
 -------------------------------------------------------------- */
 
-.front-page-background {
+body.front-page-background {
 /* background image for the front page on the whole screen */
-	background:     url(img/in_progress.gif) no-repeat fixed 0 0;
+	background:     url(img/_in_progress.gif) no-repeat fixed 0 0;
 	-webkit-background-size: cover;
 	-moz-background-size: cover;
 	-o-background-size: cover;
@@ -25,7 +25,7 @@ Version:        1.0.0
 	display: none;
 }
 
-.page-title{
+.entry-title{
 	display: none;
 }
 
@@ -33,7 +33,5 @@ Version:        1.0.0
 	border-bottom-width: 0; 
 	background: none;
 }
-
-
 
 

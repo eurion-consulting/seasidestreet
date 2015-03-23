@@ -29,8 +29,9 @@ Version:        1.0.0
 	display: none;
 }
 
-header.tc-header {
-	filter: alpha(opacity=90); 
+.tc-header {
+	border-bottom-width: 0; 
+	background: none;
 }
 
 

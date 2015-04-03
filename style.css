@@ -10,6 +10,7 @@ Version:        1.0.0
 
 /* awesome customizations start right here !
 -------------------------------------------------------------- */
+@import url('css/bootstrap.css'); 
 
 body.front-page-background {
 /* background image for the front page on the whole screen */
@@ -32,6 +33,26 @@ body.front-page-background {
 .tc-header {
 	border-bottom-width: 0; 
 	background: none;
+	display: none;
 }
 
+.featurette-divider {
+	display: none;
+}
 
+.container .marketing{
+	display: none;
+}
+
+.menu-container{
+	height: 20%;
+	float: right;
+	text-align: right;
+}
+
+@media screen and (max-width: 1000px) {
+    .asdf{
+		border: solid 2px yellow;
+		display: none;
+	}
+}

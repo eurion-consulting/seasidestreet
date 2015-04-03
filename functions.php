@@ -3,12 +3,51 @@
 * This is where you can copy and paste your functions !
 */
 
+/**
+ * Proper way to enqueue scripts and styles
+ */
+function theme_name_scripts() {
+	//TODO: remove hardcoded scripts
+	//wp_enqueue_style( 'google-maps-css', "http://code.google.com/apis/maps/documentation/javascript/examples/default.css" );
+	//wp_enqueue_script( 'google-maps-api', 'http://maps.google.com/maps/api/js?sensor=false');
+	//wp_enqueue_script( 'map', ' http://localhost/seasidestreet/wp-content/themes/customized_seaside_theme/js/map.js', array('google-maps-api'), '1.0.0', true );
+	
+	//wp_enqueue_style('bootstrap-css', "http://localhost/seasidestreet/wp-content/themes/customized_seaside_theme/css/bootstrap.min.css");
+	//wp_enqueue_script('bootstrap', "http://localhost/seasidestreet/wp-content/themes/customized_seaside_theme/js/bootstrap.min.js", array('jquery'));
+}
+
+add_action( 'wp_enqueue_scripts', 'theme_name_scripts' );
+
+// Register custom navigation walker
+require_once('seaside_navwalker.php');
+
+function initialize_globals() {
+  
+  //register custom navigation locations
+  register_nav_menus(
+    array(
+      'header-menu' => __( 'Header Menu' ),
+      'extra-menu' => __( 'Extra Menu' )
+    )
+  );
+    
+  //TODO: extract in a template parameters 	
+  $GLOBALS['percentage_of_sale_orders'] = 60;
+  $GLOBALS['seaside_min_discount'] = 10;
+  $GLOBALS['seaside_max_discount'] = 12;
+
+}
+add_action( 'init', 'initialize_globals' );
+
 add_action('template_redirect' , function() {
   //leave only the menu section in the front page template
   if ( is_front_page() ){
  	  //remove actions
-	  remove_all_actions('__header');
+	  /*remove_all_actions('__header');
+	  remove_all_actions('__before_header');
+	  remove_all_actions('__after_header');
 	  remove_all_actions('__footer');
+	 
 	  remove_all_actions('__loop');
 	  remove_all_actions('__before_article');
 	  remove_all_actions('__after_article');
@@ -19,7 +58,7 @@ add_action('template_redirect' , function() {
 	  remove_all_actions('__after_main_wrapper');
 	  remove_all_actions('__after_main_container');
 	  remove_all_actions('__after_article_container');
-	  remove_all_actions('__after_loop');
+	  remove_all_actions('__after_loop');*/
   }
 });
 
@@ -34,101 +73,58 @@ add_filter( 'body_class', function ( $classes ) {
 	return $classes;
 }, 10, 1);
 
-/**
-	Replace the text menu item with an image named the same way as the menu item and with 'png' file type.
-	For example:
-		if the menu option is named "News", a image named News.png is used in "theme/img/" folder
-*/
-function add_image_to_menu($item_output, $item, $depth, $args) {
-    
-	$title = $item->title;
-	$menu_title_position = strpos($item_output, $title);
+add_action('woocommerce_before_shop_loop', 'apply_discounts', 15);
+
+function apply_discounts(){
+
+	echo "woocommerce_before_shop_loop :: called... ";
 	
-	$image_menu_item = "<img src='" . get_stylesheet_directory_uri() . "/img/$item->title.png' alt='$item->title' title='$item->title'/>";
+	if(/*$GLOBALS['sales_price_initialized_for_today'] != date("Ymd")*/ true){
 	
-	$item_output = substr_replace($item_output, $image_menu_item, $menu_title_position, strlen($title));
-	return $item_output;
+		//set current date as flag
+		$GLOBALS['sales_price_initialized_for_today'] = date("Ymd");
+			
+		//TODO: investigate woocommerce_product_is_on_sale filter
+		 
+		 $args = array( 
+			'post_type' => 'product', 
+			//'orderby' => 'post_excerpt', 
+			'order' => 'ASC',
+			//'product_cat' => 'My Product Category',
+			'post_status' => 'publish'
+		);
+		$loop = new WP_Query( $args );
+
+		$products = $loop->found_posts;
+		$sale_products_count = round($products * $GLOBALS['percentage_of_sale_orders'] / 100);
+		
+		$products_for_sale = range(0, $products-1);
+		shuffle($products_for_sale);
+		$products_for_sale_array_id = array_slice($products_for_sale, 0, $sale_products_count);
+		$index = 0;
+		
+		while ( $loop->have_posts() ) {
+			
+			$loop->the_post();
+			$price = get_post_meta( get_the_ID(), '_regular_price');
+			$sale_price = get_post_meta( get_the_ID(), '_sale_price');
+			
+			$discount_percentage = rand($GLOBALS['seaside_min_discount'], $GLOBALS['seaside_max_discount']);
+			
+			//calculate the Sale price
+			$sale_price =  $price[0]*(1 - $discount_percentage / 100);
+			
+			if(in_array($index, $products_for_sale_array_id)){
+				update_post_meta( get_the_ID(), '_sale_price', $sale_price);
+				update_post_meta( get_the_ID(), '_price', $sale_price);
+			}else{
+				//reset the sale price potentially set on previously
+				update_post_meta( get_the_ID(), '_sale_price', null);
+				update_post_meta( get_the_ID(), '_price', $price[0]);
+			}
+			
+			$index = $index + 1;
+		}
+	
+	}
 }
-add_filter('walker_nav_menu_start_el', 'add_image_to_menu', 20, 4);
-
-/*
-	// Remove 3-bars from menu button (only the three lines)
-	add_filter('tc_menu_display', function ($output) {
-		return preg_replace('|<span class="icon-bar"></span>|', null, $output);
-	});
-
-	add_filter('tc_menu_args', function($args){
-	
-	//$args['walker'] = Seaside_Walker_Nav_Menu::$instance;
-	$args['items_wrap'] = '<ul><li id="item-id">Menu: </li>%3$s</ul>';
-	print_r($args);
-	}, 12);
-
-	function load_child_class(){
-		//get_template_directory() : D:\dev\Apache\Apache24\htdocs\seasidestreet\wp-content\themes\customizr\inc\parts\class-header-menu.php
-		
-		require_once get_template_directory().'\inc\parts\class-header-menu.php';
-		
-	}
-	add_action( 'after_setup_theme', 'load_child_class' );
-
-	class Seaside_Walker_Nav_Menu extends Walker_Nav_Menu {
-  
-		static $instance;
-		
-		function __construct () {
-			self::$instance =& $this;
-		}
-	  
-		function start_el ( &$output, $item, $depth = 0, $args = array(), $id = 0 ) {
-		
-			$item_html = '';
-			parent::start_el( $item_html, $item, $depth, $args);
-
-			if ( $item->is_dropdown ) {
-			  //makes top menu not clickable (default bootstrap behaviour)
-			  $search         = '<a';
-			  $replace        = ( ! wp_is_mobile() && 'hover' == esc_attr( TC_utils::$inst->tc_opt( 'tc_menu_type' ) ) ) ? $search : '<a class="dropdown-toggle" data-toggle="dropdown" data-target="#"';
-			  $replace       .= strpos($item_html, 'href=') ? '' : ' href="#"' ;
-			  $replace        = apply_filters( 'tc_menu_open_on_click', $replace , $search );
-			  $item_html      = str_replace( $search , $replace , $item_html);
-
-			  //adds arrows down
-			  if ( $depth === 0 )
-				  $item_html      = str_replace( '</a>' , ' <b class="caret"></b></a>' , $item_html);
-			}
-			elseif (stristr( $item_html, 'li class="divider' )) {
-			  $item_html = preg_replace( '/<a[^>]*>.*?<\/a>/iU' , '' , $item_html);
-			}
-			elseif (stristr( $item_html, 'li class="nav-header' )) {
-			  $item_html = preg_replace( '/<a[^>]*>(.*)<\/a>/iU' , '$1' , $item_html);
-			}
-
-			$output .= $item_html;
-		}
-
-		function end_el( &$output, $item, $depth = 0, $args = array() ) {
-			$output .= "</li>\n";
-		}
-	}
-
-	function wpse_remove_parent_theme_locations()
-	{
-		// @link http://codex.wordpress.org/Function_Reference/unregister_nav_menu
-		unregister_nav_menu( 'primary' );
-		unregister_nav_menu( 'Smart_Menu' );
-		unregister_nav_menu( 'Menu_Smart' );
-	}
-	add_action( 'after_setup_theme', 'wpse_remove_parent_theme_locations', 20 );
-
-	add_filter('nav_menu_css_class' , 'special_nav_class' , 30 , 2);
-	function special_nav_class($classes, $item){
-		 //echo "$item";
-		 print_r($item->title . " ");
-		 if(is_single() && $item->title == 'Live'){ //Notice you can change the conditional from is_single() and $item->title
-				 print_r("IN");
-				 $classes[] = "special-class";
-		 }
-		 return $classes;
-	}
-*/
